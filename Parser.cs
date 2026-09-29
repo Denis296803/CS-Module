@@ -13,16 +13,16 @@ public class Operation
         this.a = a; this.b = b; this.oper = oper;
     }
 }
-public class Operator
+public abstract class Operator
 {
     public string oper = "";
     public int? priority = 0;
     public bool is_unary = false;
-    public double F1(double? a)
+    public virtual double F1(double? a)
     {
         return 0;
     }
-    public double F2(double? a,double? b)
+    public virtual double F2(double? a,double? b)
     {
         return 0;
     }
@@ -122,7 +122,10 @@ public class Calc
                 if (operators[i].oper == tree.oper.oper)
                 {
                     if(tree.oper.is_unary){
-                        return Decode(tree.oper.F1(Decode(tree.b,operators)),operators);
+                        return tree.oper.F1(Decode(tree.b,operators));
+                    }
+                    else if(!tree.oper.is_unary){
+                        return tree.oper.F2(Decode(tree.a,operators),Decode(tree.b, operators));
                     }
                 }
             }

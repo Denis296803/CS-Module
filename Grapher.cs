@@ -1,98 +1,19 @@
 ﻿using System;
 using System.Collections;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data.Common;
 public class Grapher
 {
     class Node
     {
         public int parent;
         public int id;
-        public int cost;
-        public Node(int par, int co, int i) { parent = par; id = i; cost = co; }
-    }
-    public static int[] Set(int[] a, int[] b)
-    {
-        int[] outer = new int[a.Length];
-        for (int i = 0; i < a.Length; i++) outer[i] = a[i];
-        for (int c1 = 0; c1 < b.Length; c1++)
-        {
-            bool is_in = false;
-            for (int c2 = 0; c2 < a.Length; c2++)
-            {
-                if (b[c1] == a[c2])
-                {
-                    is_in = true;
-                }
-            }
-            if (!is_in)
-            {
-                int[] outertemp = new int[outer.Length + 1];
-                for (int i = 0; i < outer.Length; i++) outertemp[i] = outer[i];
-                outertemp[outer.Length] = b[c1];
-                outer = outertemp;
-            }
-        }
-        return outer;
-    }
-    public static float[] Set(float[] a, float[] b)
-    {
-        float[] outer = new float[a.Length];
-        for (int i = 0; i < a.Length; i++) outer[i] = a[i];
-        for (int c1 = 0; c1 < b.Length; c1++)
-        {
-            bool is_in = false;
-            for (int c2 = 0; c2 < a.Length; c2++)
-            {
-                if (b[c1] == a[c2])
-                {
-                    is_in = true;
-                }
-            }
-            if (!is_in)
-            {
-                float[] outertemp = new float[outer.Length + 1];
-                for (int i = 0; i < outer.Length; i++) outertemp[i] = outer[i];
-                outertemp[outer.Length] = b[c1];
-                outer = outertemp;
-            }
-        }
-        return outer;
-    }
-    public static bool is_in(int[] arr, int el)
-    {
-        for (int i = 0; i < arr.Length; i++)
-        {
-            if (arr[i] == el) return true;
-        }
-        return false;
-    }
-    public static T[] Add<T>(T[] a, T[] b)
-    {
-        T[] output = new T[a.Length + b.Length];
-        for (int i = 0; i < a.Length; i++) output[i] = a[i];
-        for (int i = a.Length; i < b.Length + a.Length; i++) output[i] = b[i - a.Length];
-        return output;
-    }
-
-    public static int Min(int[][][] queue)
-    {
-        int min = 0;
-        for (int i = 0; i < queue.Length; i++)
-        {
-            if (queue[i][1][0] < queue[min][1][0])
-            {
-                min = i;
-            }
-        }
-        return min;
+        public double cost;
+        public Node(int par, double co, int i) { parent = par; id = i; cost = co; }
     }
     public class Edge
     {
         public int id, direction;
         public int[] connections = new int[2];
-        public float weight;
+        public double weight;
         public Edge(int Id, int[] Connections, float Weight = 1, int Direction = 0)
         {
             id = Id; connections = Connections; weight = Weight; direction = Direction;
@@ -100,135 +21,91 @@ public class Grapher
     }
     public class Vertex
     {
-        public int id; public int[] connections;
-        public Vertex(int Id, int[] Connections)
+        public int id;
+        public Vertex(int Id)
         {
-            id = Id; connections = Connections;
+            id = Id;
         }
     }
 
     public class Graph
     {
-        public Vertex[] vertices = new Vertex[0]; public Edge[] edges = new Edge[0];
+        public List<Vertex> vertices = new List<Vertex>(); public List<Edge> edges = new List<Edge>(); public HashSet<int> edge_ids = new HashSet<int>(); public HashSet<int> vertex_ids = new HashSet<int>();
         public void AddVertex(Vertex vert, out string error)
         {
             if (vert.id < 0) { error = "Id не может быть отрицательным."; return; }
-            for (int i = 0; i < vertices.Length; i++)
+            if (vertex_ids.Contains(vert.id))
             {
-                if (vertices[i].id == vert.id)
-                {
-
-                    error = "Вершина с этим id уже существует. Для получения списка доступных id воспользуйтесь GetAvailableVertexIds.";
-                    return;
-                }
+                error = "Вершина с этим id уже существует. Для получения списка доступных id воспользуйтесь GetAvailableVertexIds.";
+                return;
             }
-            Logic_AddVertex(vert);
             error = "OK.";
+            Logic_AddVertex(vert);
         }
         public void AddVertex(Vertex vert)
         {
             if (vert.id < 0) { return; }
-            for (int i = 0; i < vertices.Length; i++)
-            {
-                if (vertices[i].id == vert.id)
-                    return;
-            }
+            if (vertex_ids.Contains(vert.id))
+                return;
             Logic_AddVertex(vert);
         }
         private void Logic_AddVertex(Vertex vert)
         {
-            Vertex[] verticestemp = new Vertex[vertices.Length + 1];
-            for (int i = 0; i < vertices.Length; i++) verticestemp[i] = vertices[i];
-            verticestemp[vertices.Length] = vert;
-            vertices = verticestemp;
+            vertices.Add(vert);
+            vertex_ids.Add(vert.id);
         }
         public void AddEdge(Edge edge)
         {
             if (edge.id < 0) { return; }
-            bool exist1 = false, exist2 = false;
-            for (int i = 0; i < vertices.Length; i++)
-            {
-                if (edge.connections[0] == vertices[i].id) exist1 = true;
-                if (edge.connections[1] == vertices[i].id) exist2 = true;
-            }
-            if (!exist1 || !exist2)
-            {
+            if (!edge_ids.Contains(edge.connections[0]) || !edge_ids.Contains(edge.connections[1]) || edge_ids.Contains(edge.id))
                 return;
-            }
-            for (int i = 0; i < edges.Length; i++)
-            {
-                if (edges[i].id == edge.id)
-                    return;
-            }
             Logic_AddEdge(edge);
         }
         public void AddEdge(Edge edge, out string error)
         {
             if (edge.id < 0) { error = "Id не может быть отрицательным."; return; }
-            bool exist1 = false, exist2 = false;
-            for (int i = 0; i < vertices.Length; i++)
-            {
-                if (edge.connections[0] == vertices[i].id) exist1 = true;
-                if (edge.connections[1] == vertices[i].id) exist2 = true;
-            }
-            if (!exist1 || !exist2)
+            if (!edge_ids.Contains(edge.connections[0]) || !edge_ids.Contains(edge.connections[1]) || edge_ids.Contains(edge.id))
             {
                 error = "Вершин(-ы) с указанным(-и) идентификаторам(-и) не существует.";
                 return;
             }
-            for (int i = 0; i < edges.Length; i++)
+            
+            if (edge_ids.Contains(edge.id))
             {
-                if (edges[i].id == edge.id)
-                {
-                    error = "Ребро с этим id уже существует. Для получения списка доступных id воспользуйтесь GetAvailableEdgeIds.";
-                    return;
-                }
+                error = "Ребро с этим id уже существует. Для получения списка доступных id воспользуйтесь GetAvailableEdgeIds.";
+                return;
             }
             Logic_AddEdge(edge);
             error = "OK.";
         }
         private void Logic_AddEdge(Edge edge)
         {
-            Edge[] edgestemp = new Edge[edges.Length + 1];
-            for (int i = 0; i < edges.Length; i++) edgestemp[i] = edges[i];
-            edgestemp[edges.Length] = edge;
-            edges = edgestemp;
+            edges.Add(edge);
+            edge_ids.Add(edge.id);
         }
         public int GetAvailableVertexId()
         {
-            if (vertices == null || vertices.Length == 0) return 0;
-            if (vertices.Length - 1 == vertices[vertices.Length - 1].id) return vertices.Length;
-            bool[] availableids = new bool[vertices.Length];
-            for (int i = 0; i < vertices.Length; i++) availableids[i] = false;
-            for (int i = 0; i < vertices.Length; i++)
-            {
-                if (vertices[i].id < vertices.Length) availableids[i] = true;
-            }
-            for (int i = 0; i < vertices.Length; i++)
-            {
-                if (!availableids[i]) return i;
+            if (vertices == null || vertices.Count == 0) return 0;
+            if (vertices.Count - 1 == vertices[vertices.Count - 1].id) return vertices.Count;
+            for(int i=0;i<vertices.Count;i++){
+                if (!vertex_ids.Contains(i))
+                    return i;
             }
             return -1;
         }
         public int GetAvailableEdgeId()
         {
-            if (edges == null || edges.Length == 0) return 0;
-            if (edges.Length - 1 == edges[edges.Length - 1].id) return edges.Length;
-            bool[] availableids = new bool[edges.Length];
-            for (int i = 0; i < edges.Length; i++) availableids[i] = false;
-            for (int i = 0; i < edges.Length; i++)
-            {
-                if (edges[i].id < edges.Length) availableids[i] = true;
-            }
-            for (int i = 0; i < edges.Length; i++)
-            {
-                if (!availableids[i]) return i;
+            if (edges == null || edges.Count == 0) return 0;
+            if (edges.Count - 1 == edges[edges.Count - 1].id) return edges.Count;
+            for(int i=0;i<edges.Count;i++){
+                if (!edge_ids.Contains(i))
+                    return i;
             }
             return -1;
         }
         public void DelVertex(int id, out string error)
         {
-            for (int i = 0; i < vertices.Length; i++)
+            for (int i = 0; i < vertices.Count; i++)
             {
                 if (vertices[i].id == id)
                 {
@@ -241,28 +118,34 @@ public class Grapher
         }
         public void DelVertex(int id)
         {
-            for (int i = 0; i < vertices.Length; i++)
+            for (int i = 0; i < vertices.Count; i++)
             {
                 if (vertices[i].id == id)
                 {
-                    Logic_DelVertex(id);
+                    Logic_DelVertex(i);
                     return;
                 }
             }
         }
         private void Logic_DelVertex(int index)
         {
-            Vertex[] temp = new Vertex[vertices.Length - 1];
-            for (int i = 0; i < index; i++) temp[i] = vertices[i];
-            for (int i = index + 1; i < vertices.Length; i++) temp[i] = vertices[i];
-            vertices = temp;
+            for (int i = 0; i < edges.Count; i++)
+            {
+                if (edges[i].connections[0] == index || edges[i].connections[1] == index)
+                {
+                    Logic_DelEdge(i);
+                    i--;
+                }
+            }
+            vertex_ids.Remove(vertices[index].id);
+            vertices.RemoveAt(index);
 
         }
-        public void Deledge(int id, out string error)
+        public void DelEdge(int id, out string error)
         {
-            for (int i = 0; i < vertices.Length; i++)
+            for (int i = 0; i < edges.Count; i++)
             {
-                if (vertices[i].id == id)
+                if (edges[i].id == id)
                 {
                     Logic_DelEdge(i);
                     error = "OK.";
@@ -271,11 +154,11 @@ public class Grapher
             }
             error = "Такого ребра не существует.";
         }
-        public void Deledge(int id)
+        public void DelEdge(int id)
         {
-            for (int i = 0; i < vertices.Length; i++)
+            for (int i = 0; i < edges.Count; i++)
             {
-                if (vertices[i].id == id)
+                if (edges[i].id == id)
                 {
                     Logic_DelEdge(id);
                     return;
@@ -284,15 +167,13 @@ public class Grapher
         }
         private void Logic_DelEdge(int index)
         {
-            Edge[] temp = new Edge[vertices.Length - 1];
-            for (int i = 0; i < index; i++) temp[i] = edges[i];
-            for (int i = index + 1; i < vertices.Length; i++) temp[i] = edges[i];
-            edges = temp;
+            edge_ids.Remove(edges[index].id);
+            edges.RemoveAt(index);
 
         }
         public Vertex GetVertex(int id, out string error)
         {
-            for (int i = 0; i < vertices.Length; i++)
+            for (int i = 0; i < vertices.Count; i++)
             {
                 if (vertices[i].id == id)
                 {
@@ -306,7 +187,7 @@ public class Grapher
         }
         public Vertex GetVertex(int id)
         {
-            for (int i = 0; i < vertices.Length; i++)
+            for (int i = 0; i < vertices.Count; i++)
             {
                 if (vertices[i].id == id)
                 {
@@ -318,9 +199,9 @@ public class Grapher
         }
         public Edge GetEdge(int id, out string error)
         {
-            for (int i = 0; i < vertices.Length; i++)
+            for (int i = 0; i < edges.Count; i++)
             {
-                if (vertices[i].id == id)
+                if (edges[i].id == id)
                 {
                     error = "OK.";
                     return edges[i];
@@ -332,9 +213,9 @@ public class Grapher
         }
         public Edge GetEdge(int id)
         {
-            for (int i = 0; i < vertices.Length; i++)
+            for (int i = 0; i < edges.Count; i++)
             {
-                if (vertices[i].id == id)
+                if (edges[i].id == id)
                 {
                     return edges[i];
 
@@ -342,76 +223,39 @@ public class Grapher
             }
             return null;
         }
-        public Vertex[] GetNeighbours(int id)
+        public List<Vertex> GetNeighbours(int id)
         {
-            Vertex[] nei = new Vertex[0];
-            for (int a = 0; a < edges.Length; a++)
+            List<Vertex> nei = new List<Vertex>();
+            for (int a = 0; a < edges.Count; a++)
             {
                 if (edges[a].connections[0] == id)
                 {
-                    for (int b = 0; b < vertices.Length; b++)
+                    for (int b = 0; b < vertices.Count; b++)
                     {
                         if (vertices[b].id == edges[a].connections[1])
-                            nei = Add(nei, new Vertex[] { vertices[b] });
+                            nei.Add(vertices[b]);
                     }
                 }
                 else if (edges[a].connections[1] == id)
                 {
-                    for (int b = 0; b < vertices.Length; b++)
+                    for (int b = 0; b < vertices.Count; b++)
                     {
                         if (vertices[b].id == edges[a].connections[0])
-                            nei = Add(nei, new Vertex[] { vertices[b] });
+                            nei.Add(vertices[b]);
                     }
 
                 }
             }
             return nei;
         }
-        public static Graph operator +(Graph graph1, Graph graph2)
-        {
-            Graph graph3 = new Graph();
-            for (int a = 0; a < graph2.vertices.Length; a++)
-            {
-                for (int b = 0; b < graph1.vertices.Length; b++)
-                {
-                    if (graph1.vertices[a].id == graph2.vertices[b].id)
-                    {
-                        int[] v = Set(graph1.vertices[a].connections, graph2.vertices[b].connections);
-                        graph3.AddVertex(new Vertex(graph1.vertices[a].id, v));
-                    }
-                    else
-                    {
-                        graph3.AddVertex(graph1.vertices[a]);
-                        graph3.AddVertex(graph2.vertices[b]);
-                    }
-                }
-            }
-            for (int a = 0; a < graph2.edges.Length; a++)
-            {
-                for (int b = 0; b < graph1.edges.Length; b++)
-                {
-                    if (graph1.edges[a].id == graph2.edges[b].id)
-                    {
-                        int[] v = Set(graph1.edges[a].connections, graph2.edges[b].connections);
-                        graph3.AddEdge(new Edge(graph1.edges[a].id, v));
-                    }
-                    else
-                    {
-                        graph3.AddEdge(graph1.edges[a]);
-                        graph3.AddEdge(graph2.edges[b]);
-                    }
-                }
-            }
-            return graph3;
-        }
-        public int[] A(int start, int goal)
+        public int[] Dijkstra(int start, int goal)
         {
             List<Node> nodes = new List<Node>();
             List<Node> visnode = new List<Node>();
             HashSet<int> visid = new HashSet<int>();
 
             nodes.Add(new Node(-1, 0, start));
-            int index = 0, min = 0;
+            int index = 0; double min = 0;
 
             while (true)
             {
@@ -428,18 +272,18 @@ public class Grapher
                 if (nodes[index].id == goal)
                     break;
 
-                Vertex[] neighbours = GetNeighbours(nodes[index].id);
-                for (int i = 0; i < neighbours.Length; i++)
+                List<Vertex> neighbours = GetNeighbours(nodes[index].id);
+                for (int i = 0; i < neighbours.Count; i++)
                 {
                     if (!visid.Contains(neighbours[i].id))
                     {
-                        int cost = 0;
-                        for (int j = 0; j < edges.Length; j++)
+                        double cost = 0;
+                        for (int j = 0; j < edges.Count; j++)
                         {
                             if (neighbours[i].id == edges[j].connections[0] && nodes[index].id == edges[j].connections[1] ||
                             neighbours[i].id == edges[j].connections[1] && nodes[index].id == edges[j].connections[0])
                             {
-                                cost = (int)edges[j].weight;
+                                cost = edges[j].weight;
                                 break;
                             }
                         }
@@ -466,40 +310,5 @@ public class Grapher
             return h;
         }
 
-    }
-}
-class Program
-{
-    static void Main(string[] args)
-    {
-        Grapher.Graph graph = new Grapher.Graph();
-
-        // ===== Компонента 1: вершины 0, 1, 2, 3 =====
-        // Вершины (connections можно указать для наглядности, но алгоритм их не использует)
-        graph.AddVertex(new Grapher.Vertex(0, new int[] { 1, 2 }));
-        graph.AddVertex(new Grapher.Vertex(1, new int[] { 0, 2 }));
-        graph.AddVertex(new Grapher.Vertex(2, new int[] { 0, 1, 3 }));
-        graph.AddVertex(new Grapher.Vertex(3, new int[] { 2 }));
-
-        // Рёбра (id, connections[2], weight)
-        graph.AddEdge(new Grapher.Edge(0, new int[] { 0, 1 }, 4)); // 0-1 вес 4
-        graph.AddEdge(new Grapher.Edge(1, new int[] { 0, 2 }, 2)); // 0-2 вес 2
-        graph.AddEdge(new Grapher.Edge(2, new int[] { 1, 2 }, 5)); // 1-2 вес 5
-        graph.AddEdge(new Grapher.Edge(3, new int[] { 2, 3 }, 3)); // 2-3 вес 3
-
-        // ===== Компонента 2: вершины 10, 11, 12 =====
-        graph.AddVertex(new Grapher.Vertex(10, new int[] { 11 }));
-        graph.AddVertex(new Grapher.Vertex(11, new int[] { 10, 12 }));
-        graph.AddVertex(new Grapher.Vertex(12, new int[] { 11 }));
-
-        graph.AddEdge(new Grapher.Edge(10, new int[] { 10, 11 }, 1)); // 10-11 вес 1
-        graph.AddEdge(new Grapher.Edge(11, new int[] { 11, 12 }, 2)); // 11-12 вес 2
-
-        // ===== Компонента 3: одиночная вершина 20 =====
-        graph.AddVertex(new Grapher.Vertex(20, new int[0]));
-
-        // Теперь можно вызывать, например:
-        // int[] path = graph.A(0, 3);  // должно вернуть {0, 2, 3}
-        // int[] noPath = graph.A(0, 20); // вернёт {-1} (пути нет)
     }
 }
